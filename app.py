@@ -9,7 +9,7 @@ st.set_page_config(page_title="CM360 Bulk Event Tags", layout="wide")
 st.title("Campaign Manager 360: Bulk Event Tag Creator")
 
 # --- Configuration ---
-SCOPES = ['https://www.googleapis.com/auth/dfareporting']
+SCOPES = ['https://www.googleapis.com/auth/dfatrafficking']
 API_SERVICE_NAME = 'dfareporting'
 API_VERSION = 'v5' 
 
