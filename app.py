@@ -11,7 +11,7 @@ st.title("Campaign Manager 360: Bulk Event Tag Creator")
 # --- Configuration ---
 SCOPES = ['https://www.googleapis.com/auth/dfareporting']
 API_SERVICE_NAME = 'dfareporting'
-API_VERSION = 'v4' 
+API_VERSION = 'v5' 
 
 # Load secrets
 if "client_secrets" not in st.secrets:
