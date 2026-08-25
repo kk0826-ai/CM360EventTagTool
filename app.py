@@ -24,96 +24,25 @@ if "client_secrets" not in st.secrets:
     st.error("⚠️ Missing secrets configuration! Please check your Streamlit App Settings.")
     st.stop()
 
-# --- Custom Styling (Dark Mode Modern AdOps UI) ---
+# --- Custom Styling for Classic Enterprise UI ---
 st.markdown("""
     <style>
-    /* Dark Theme Core Reset */
-    .stApp {
-        background-color: #0E1117;
-        color: #E2E8F0;
-    }
-    
-    /* Header Container Styling */
-    .header-box {
-        background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
-        padding: 24px;
-        border-radius: 12px;
-        border: 1px solid #334155;
-        margin-bottom: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    }
-    .header-title {
-        font-size: 2.2rem;
-        font-weight: 800;
-        color: #F8FAFC;
-        margin: 0;
-        letter-spacing: -0.5px;
-    }
-    .header-sub {
-        font-size: 1rem;
-        color: #94A3B8;
-        margin-top: 6px;
-    }
-
-    /* Tabs Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        border-bottom: 1px solid #334155;
-    }
-    .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        white-space: pre-wrap;
-        background-color: #1E293B;
-        border-radius: 8px 8px 0px 0px;
-        color: #94A3B8;
-        font-weight: 600;
-        border: 1px solid #334155;
-        border-bottom: none;
-        padding: 0 20px;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #3B82F6 !important;
-        color: #FFFFFF !important;
-        border-color: #3B82F6 !important;
-    }
-
-    /* Metric Card Customization */
-    div[data-testid="stMetric"] {
-        background-color: #1E293B;
-        border: 1px solid #334155;
-        padding: 16px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    div[data-testid="stMetricLabel"] {
-        color: #94A3B8 !important;
-        font-weight: 600;
-    }
-    div[data-testid="stMetricValue"] {
-        color: #F8FAFC !important;
+    .main-header {
+        font-size: 2rem;
         font-weight: 700;
+        color: #1E293B;
+        margin-bottom: 0.5rem;
     }
-
-    /* Button Styling */
-    .stButton>button {
+    .sub-header {
+        font-size: 1rem;
+        color: #64748B;
+        margin-bottom: 2rem;
+    }
+    .stMetric {
+        background-color: #F8FAFC;
+        padding: 12px;
         border-radius: 8px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-    }
-    button[kind="primary"] {
-        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
-        border: none;
-    }
-    button[kind="primary"]:hover {
-        background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 100%);
-        box-shadow: 0 0 12px rgba(37, 99, 235, 0.5);
-    }
-
-    /* Dataframe Table Container */
-    div[data-testid="stDataFrame"] {
-        border: 1px solid #334155;
-        border-radius: 8px;
-        overflow: hidden;
+        border: 1px solid #E2E8F0;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -141,13 +70,7 @@ def get_creds():
     flow = st.session_state.oauth_flow
     auth_url = st.session_state.auth_url
 
-    st.markdown("""
-        <div class="header-box">
-            <div class="header-title">🔐 CM360 Authentication</div>
-            <div class="header-sub">Authorize access to Campaign Manager 360 to begin</div>
-        </div>
-    """, unsafe_allow_html=True)
-    
+    st.markdown("<div class='main-header'>🔐 CM360 Authentication</div>", unsafe_allow_html=True)
     st.info("Log in with your Google account authorized for Campaign Manager 360.")
     st.markdown(f"#### 1. [Click here to get your Authorization Code]({auth_url})", unsafe_allow_html=True)
     
@@ -159,6 +82,7 @@ def get_creds():
             creds = flow.credentials
             st.session_state.creds = creds
             
+            # Clean session state
             del st.session_state['oauth_flow']
             del st.session_state['auth_url']
             
@@ -180,7 +104,8 @@ if creds:
 
     # --- Sidebar Setup ---
     with st.sidebar:
-        st.markdown("## ⚙️ Settings")
+        st.image("https://www.gstatic.com/images/branding/product/2x/campaign_manager_64dp.png", width=50)
+        st.title("CM360 Settings")
         
         # Profile Selector
         try:
@@ -195,7 +120,7 @@ if creds:
             selected_profile_key = st.selectbox("Active Profile", options=list(profile_dict.keys()))
             profile_id = profile_dict[selected_profile_key]
             
-            st.caption(f"**Selected Profile ID:** `{profile_id}`")
+            st.caption(f"**Profile ID:** `{profile_id}`")
             
         except Exception as e:
             st.error(f"Error fetching user profiles: {e}")
@@ -206,16 +131,12 @@ if creds:
             del st.session_state['creds']
             st.rerun()
 
-    # --- Banner Header ---
-    st.markdown("""
-        <div class="header-box">
-            <div class="header-title">Campaign Manager 360: Event Tag Creator</div>
-            <div class="header-sub">Bulk generate Impression and Click-Through event tags via CM360 API</div>
-        </div>
-    """, unsafe_allow_html=True)
+    # --- Header Banner ---
+    st.markdown("<div class='main-header'>Campaign Manager 360: Event Tag Manager</div>", unsafe_allow_html=True)
+    st.markdown("<div class='sub-header'>Bulk create impression & click event tags across Advertisers and Campaigns</div>", unsafe_allow_html=True)
 
     # --- Tabs Navigation ---
-    tab_create, tab_template, tab_docs = st.tabs(["🚀 Bulk Tag Creator", "📋 CSV Template", "📖 Documentation"])
+    tab_create, tab_template, tab_docs = st.tabs(["🚀 Bulk Tag Creator", "📋 Download CSV Template", "📖 Field Documentation"])
 
     # ---------------------------------------------------------
     # TAB 1: BULK CREATOR
@@ -225,6 +146,8 @@ if creds:
 
         if uploaded_file:
             df = pd.read_csv(uploaded_file)
+            
+            # Sanitize column names
             df.columns = df.columns.str.strip()
             
             required_cols = {'Tag Name', 'Level', 'Parent ID', 'Tag Type', 'Tag URL'}
@@ -236,6 +159,7 @@ if creds:
                 st.subheader("Data Preview")
                 st.dataframe(df, use_container_width=True)
 
+                # Pre-flight Validation Warning
                 invalid_urls = df[~df['Tag URL'].astype(str).str.startswith('https://')]
                 if not invalid_urls.empty:
                     st.warning(f"⚠️ Found {len(invalid_urls)} row(s) where 'Tag URL' does not start with `https://`. These will fail during creation.")
@@ -279,6 +203,7 @@ if creds:
                             fail_count += 1
                             continue
 
+                        # Make API Call
                         try:
                             request = service.eventTags().insert(profileId=profile_id, body=tag_payload)
                             response = request.execute()
@@ -300,10 +225,12 @@ if creds:
                             })
                             fail_count += 1
 
+                        # Update UI Progress
                         progress = (index + 1) / len(df)
                         progress_bar.progress(progress)
                         status_text.text(f"Processing row {index + 1} of {len(df)}: {tag_name}")
 
+                    # Execution Summary Dashboard
                     st.subheader("Creation Summary")
                     col_m1, col_m2, col_m3 = st.columns(3)
                     col_m1.metric("Total Rows", len(df))
@@ -313,6 +240,7 @@ if creds:
                     results_df = pd.DataFrame(results)
                     st.dataframe(results_df, use_container_width=True)
 
+                    # Export Log
                     csv_export = results_df.to_csv(index=False).encode('utf-8')
                     st.download_button(
                         "📥 Download Execution Log (CSV)", 
@@ -372,9 +300,9 @@ if creds:
         st.markdown("""
         | Field | Description | Allowed Values / Formatting |
         | :--- | :--- | :--- |
-        | **Tag Name** | Descriptive name for the tag | Any text string |
+        | **Tag Name** | Descriptive name for the tag | Any text (e.g., `IAS_Viewability_Q3`) |
         | **Level** | Scope of the event tag | `ADVERTISER` or `CAMPAIGN` |
-        | **Parent ID** | CM360 ID where tag will be attached | Numeric Advertiser ID or Campaign ID |
+        | **Parent ID** | CM360 ID where tag will be attached | Numeric ID (Advertiser ID or Campaign ID) |
         | **Tag Type** | Format/Type of event tag | `IMPRESSION_JAVASCRIPT_EVENT_TAG`<br>`IMPRESSION_IMAGE_EVENT_TAG`<br>`CLICK_THROUGH_EVENT_TAG` |
-        | **Tag URL** | Third-party pixel URL | Must begin with **`https://`** |
+        | **Tag URL** | Third-party pixel URL | Must start with **`https://`** |
         """)
