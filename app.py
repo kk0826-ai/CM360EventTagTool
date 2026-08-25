@@ -155,9 +155,9 @@ Sign in with Google
                     del st.session_state['auth_url']
 
     with col_right:
-        # Replaces the image with the official deep "Jaguar" color from Sigma/MiQ branding
+        # Beautiful MiQ Brand Gradient covering the right side
         st.markdown("""
-<div style="height: 95vh; width: 100%; border-radius: 24px; margin-top: 12px; background-color: #130217; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+<div style="height: 95vh; width: 100%; border-radius: 24px; margin-top: 12px; background: linear-gradient(135deg, #FFCA01 0%, #FF6500 25%, #FF2000 50%, #EA00AD 75%, #2B0030 100%); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
 </div>
 """, unsafe_allow_html=True)
 
