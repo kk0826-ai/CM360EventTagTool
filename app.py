@@ -1,76 +1,72 @@
 import streamlit as st
 import pandas as pd
 import json
-from google_auth_oauthlib.flow import Flow
-from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
-
-# --- 1. Configuration ---
-SCOPES = ['https://www.googleapis.com/auth/dfareporting']
-API_SERVICE_NAME = 'dfareporting'
-API_VERSION = 'v4' 
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
 
 st.set_page_config(page_title="CM360 Bulk Event Tags", layout="wide")
 st.title("Campaign Manager 360: Bulk Event Tag Creator")
 
-# Load the secret from Streamlit Cloud
-if "client_secrets" not in st.secrets:
-    st.error("Missing secrets! Please make sure the 'client_secrets' block is configured in your Streamlit App Settings.")
-    st.stop()
+# --- Configuration ---
+SCOPES = ['https://www.googleapis.com/auth/dfareporting']
+API_SERVICE_NAME = 'dfareporting'
+API_VERSION = 'v4' 
 
-# Parse the JSON string from secrets
-client_config = json.loads(st.secrets["client_secrets"])
-# Extract the redirect URI dynamically
-REDIRECT_URI = client_config["web"]["redirect_uris"][0] 
-
-# --- 2. Web Authentication Flow ---
-def authenticate():
-    flow = Flow.from_client_config(
-        client_config,
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
-    )
-
+# --- Authentication Logic (Adapted from your DV360 tool) ---
+def get_creds():
     # 1. Check if token already exists in the user's session
-    if 'creds_token' in st.session_state:
-        creds = Credentials.from_authorized_user_info(st.session_state['creds_token'], SCOPES)
-        if creds.valid:
-            return build(API_SERVICE_NAME, API_VERSION, credentials=creds)
+    if 'creds' in st.session_state and st.session_state.creds and st.session_state.creds.valid:
+        return st.session_state.creds
 
-    # 2. Check if the URL contains the auth code (user just logged in)
-    if 'code' in st.query_params:
-        auth_code = st.query_params['code']
+    # 2. Start the Manual Copy-Paste Flow
+    try:
+        # Assuming you pasted the Desktop App JSON directly into Streamlit Secrets
+        # e.g., using a variable named `client_secrets`
+        client_config = json.loads(st.secrets["client_secrets"])
+        flow = InstalledAppFlow.from_client_config(
+            client_config, 
+            SCOPES, 
+            redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+        )
+    except Exception as e:
+        st.error(f"Failed to load secrets. Make sure your secrets are configured. Error: {e}")
+        return None
+
+    # Generate the authorization URL
+    auth_url, _ = flow.authorization_url(prompt='consent')
+    st.info("Please log in with your Google account to access Campaign Manager 360.")
+    st.markdown(f"### [🔗 Click here to get your Authorization Code]({auth_url})", unsafe_allow_html=True)
+    
+    # Text input for the user to paste the code
+    auth_code = st.text_input("Paste the authorization code you received here:", type="password")
+    
+    if auth_code:
         try:
-            # Try to exchange the code for a token
+            # Exchange the pasted code for a token
             flow.fetch_token(code=auth_code)
             creds = flow.credentials
             
-            # Save token to session and clear the URL so it looks clean
-            st.session_state['creds_token'] = json.loads(creds.to_json())
-            st.query_params.clear()
-            st.rerun()
+            # Save the valid credentials into session state
+            st.session_state.creds = creds
+            st.success("Authentication successful!")
+            st.rerun() # Refresh the page to show the main tool
             
         except Exception as e:
-            # If the code was already used or expired, clear the URL and stop gracefully
-            st.query_params.clear()
-            st.warning("Login session expired or the page was refreshed. Please click Login again.")
-            st.stop()
+            st.error(f"Error fetching token (the code might be expired or invalid): {e}")
+            
+    return None
 
-    # 3. If neither, present the login button
-    auth_url, _ = flow.authorization_url(prompt='consent')
-    st.info("Please log in with your Google account to access Campaign Manager 360.")
-    st.link_button("Login with Google", auth_url, type="primary")
-    st.stop() # Halts the rest of the app until they log in
+# --- Main Application Logic ---
+creds = get_creds()
 
-# --- 3. Main Application ---
-service = authenticate()
-
-if service:
-    # Top bar showing login success and logout button
+if creds:
+    service = build(API_SERVICE_NAME, API_VERSION, credentials=creds)
+    
     col1, col2 = st.columns([0.9, 0.1])
-    col1.success("Authenticated Successfully")
+    col1.success("Authenticated Successfully with CM360")
     if col2.button("Log Out"):
-        del st.session_state['creds_token']
+        del st.session_state['creds']
         st.rerun()
 
     st.divider()
@@ -135,7 +131,6 @@ if service:
                     results.append({"Tag Name": row['Tag Name'], "Status": "Success", "ID": response['id']})
                     
                 except Exception as e:
-                    # Catch API errors (e.g. invalid URL format, non-whitelisted domain, wrong parent ID)
                     results.append({"Tag Name": row['Tag Name'], "Status": f"Failed: {e}", "ID": None})
                     
                 # Update visual progress
@@ -147,6 +142,5 @@ if service:
             results_df = pd.DataFrame(results)
             st.dataframe(results_df)
             
-            # Allow users to download the success/fail log
             csv_export = results_df.to_csv(index=False).encode('utf-8')
             st.download_button("Download QA Results", data=csv_export, file_name="event_tag_results.csv", mime="text/csv")
