@@ -7,7 +7,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 # --- Page Config (Must be first) ---
-st.set_page_config(page_title="CM360 Tag Manager", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="CM360 Tag Manager", layout="wide", initial_sidebar_state="collapsed")
 
 # --- API Config ---
 SCOPES = ['https://www.googleapis.com/auth/dfatrafficking']
@@ -33,7 +33,7 @@ section[data-testid="stSidebar"] {display: none !important;}
 .stButton>button {
     border-radius: 8px !important;
     font-weight: 600 !important;
-    height: 44px;
+    height: 48px;
     transition: all 0.2s ease;
 }
 button[kind="primary"] {
@@ -63,6 +63,7 @@ button[kind="secondary"]:hover {
     color: #0F172A !important;
     border-radius: 8px !important;
     padding: 12px 16px !important;
+    height: 48px !important;
 }
 .stTextInput input:focus {
     background-color: #FFFFFF !important;
@@ -107,39 +108,38 @@ def render_login_page():
     auth_url = st.session_state.auth_url
 
     # Create the two-column split layout
-    col_left, col_right = st.columns([1.1, 1.3], gap="large")
+    col_left, col_right = st.columns([1, 1.2], gap="large")
     
     with col_left:
-        st.write("") # Vertical spacer
+        st.write("") 
+        st.write("") 
+        st.write("") 
         st.write("") 
         st.write("") 
         st.write("") 
         
-        # 100% Flush left HTML for the login instructions
+        # 100% Flush left HTML for the clean login UI
         st.markdown(f"""
 <div>
-<div style="width: 48px; height: 48px; background: #0F172A; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 24px;">⚡</div>
-<h1 style="font-size: 2rem; font-weight: 700; color: #0F172A; margin: 0 0 8px 0; letter-spacing: -0.02em;">CM360 Bulk Tag Manager</h1>
-<p style="font-size: 1rem; color: #64748B; margin: 0 0 32px 0;">Google's security requires a manual two-step authorization. Follow the steps below to connect your account.</p>
+<h1 style="font-size: 2rem; font-weight: 700; color: #0F172A; margin: 0 0 8px 0; letter-spacing: -0.02em;">Welcome Back</h1>
+<p style="font-size: 1rem; color: #64748B; margin: 0 0 32px 0;">Sign in to CM360 Bulk Tag Manager.</p>
 
-<div style="margin-bottom: 24px; padding: 20px; border: 1px solid #E2E8F0; border-radius: 12px; background: #F8FAFC;">
-<h3 style="font-size: 0.95rem; font-weight: 700; margin: 0 0 8px 0; color: #0F172A;">Step 1: Get Authorization Code</h3>
-<p style="font-size: 0.85rem; color: #64748B; margin: 0 0 16px 0;">Click the button below to open Google in a new tab. Select your account, click allow, and copy the code provided.</p>
 <a href="{auth_url}" target="_blank" style="text-decoration: none;">
-<button style="width: 100%; background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-Open Google Login ↗
+<button style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 16px;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.56 12.25C22.56 11.47 22.49 10.73 22.36 10H12V14.26H17.92C17.67 15.63 16.89 16.79 15.74 17.56V20.3H19.31C21.4 18.38 22.56 15.57 22.56 12.25Z" fill="#4285F4"/>
+<path d="M12 23C14.97 23 17.46 22.02 19.31 20.3L15.74 17.56C14.74 18.23 13.48 18.63 12 18.63C9.13 18.63 6.7 16.69 5.82 14.1H2.15V16.94C3.96 20.53 7.7 23 12 23Z" fill="#34A853"/>
+<path d="M5.82 14.1C5.59 13.43 5.46 12.73 5.46 12C5.46 11.27 5.59 10.57 5.82 9.9V7.06H2.15C1.41 8.54 1 10.22 1 12C1 13.78 1.41 15.46 2.15 16.94L5.82 14.1Z" fill="#FBBC05"/>
+<path d="M12 5.38C13.62 5.38 15.07 5.94 16.21 7.02L19.38 3.85C17.45 2.05 14.97 1 12 1C7.7 1 3.96 3.47 2.15 7.06L5.82 9.9C6.7 7.31 9.13 5.38 12 5.38Z" fill="#EA4335"/>
+</svg>
+Sign in with Google
 </button>
 </a>
 </div>
-
-<div style="padding: 0 4px;">
-<h3 style="font-size: 0.95rem; font-weight: 700; margin: 0 0 8px 0; color: #0F172A;">Step 2: Paste Code to Connect</h3>
-</div>
-</div>
 """, unsafe_allow_html=True)
         
-        # Step 2 Input Field
-        auth_code = st.text_input("Paste Code", label_visibility="collapsed", placeholder="Paste the Google code here...")
+        # Input Field placed immediately below the button
+        auth_code = st.text_input("Authorization Code", label_visibility="collapsed", placeholder="Paste your authorization code here...")
         
         if auth_code:
             try:
@@ -155,15 +155,15 @@ Open Google Login ↗
                     del st.session_state['auth_url']
 
     with col_right:
-        # High-quality SaaS abstract image to balance the page
+        # Replaces the image with the official deep "Jaguar" color from Sigma/MiQ branding
         st.markdown("""
-<div style="height: 90vh; width: 100%; border-radius: 24px; overflow: hidden; margin-top: 24px; background-image: url('https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?q=80&w=2000&auto=format&fit=crop'); background-size: cover; background-position: center; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+<div style="height: 95vh; width: 100%; border-radius: 24px; margin-top: 12px; background-color: #130217; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
 </div>
 """, unsafe_allow_html=True)
 
 
 # ==========================================
-# 2. MAIN SAAS WORKSPACE VIEW (LEFT/RIGHT ORG)
+# 2. MAIN SAAS WORKSPACE VIEW 
 # ==========================================
 def render_workspace(creds):
     service = build(API_SERVICE_NAME, API_VERSION, credentials=creds)
@@ -185,12 +185,9 @@ def render_workspace(creds):
     
     with header_col1:
         st.markdown("""
-<div style="display: flex; align-items: center; gap: 16px;">
-<div style="width: 48px; height: 48px; background: #0F172A; color: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px;">⚡</div>
 <div>
 <h1 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #0F172A;">Bulk Event Tags</h1>
 <p style="margin: 0; font-size: 0.95rem; color: #64748B;">Upload, preview, and generate pixels across campaigns.</p>
-</div>
 </div>
 """, unsafe_allow_html=True)
 
