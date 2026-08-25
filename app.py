@@ -18,7 +18,7 @@ if "client_secrets" not in st.secrets:
     st.error("⚠️ Missing 'client_secrets' in Streamlit secrets configuration.")
     st.stop()
 
-# --- Advanced SaaS CSS Injection ---
+# --- Minimal Light SaaS CSS Injection ---
 st.markdown("""
     <style>
     /* Import Inter Font */
@@ -32,12 +32,11 @@ st.markdown("""
     #MainMenu, header, footer {display: none !important;}
     section[data-testid="stSidebar"] {display: none !important;}
     
-    /* Global Background */
+    /* Global Background - Crisp Off-White */
     .stApp {
-        background-color: #000000;
-        color: #EDEDED;
-        background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 70%);
-        background-attachment: fixed;
+        background-color: #FAFAFA !important; 
+        background-image: none !important;
+        color: #18181B !important; 
     }
 
     /* --- LOGIN PAGE STYLES --- */
@@ -50,38 +49,41 @@ st.markdown("""
     }
     
     .login-card {
-        background: #0A0A0A;
-        border: 1px solid #222222;
+        background: #FFFFFF;
+        border: 1px solid #E4E4E7;
         border-radius: 16px;
         padding: 48px 40px;
         width: 100%;
         max-width: 440px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.02);
         text-align: center;
     }
     
     .login-logo {
         width: 48px;
         height: 48px;
-        background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+        background: #FFFFFF;
+        border: 1px solid #E4E4E7;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24px;
         margin: 0 auto 24px auto;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
     }
     
     .login-title {
         font-size: 1.5rem;
         font-weight: 600;
-        color: #FFFFFF;
+        color: #09090B;
         margin-bottom: 8px;
+        letter-spacing: -0.02em;
     }
     
     .login-subtitle {
         font-size: 0.95rem;
-        color: #A1A1AA;
+        color: #71717A;
         margin-bottom: 32px;
         line-height: 1.5;
     }
@@ -95,114 +97,115 @@ st.markdown("""
         transition: all 0.2s ease;
     }
     
+    /* Primary Black Button */
     button[kind="primary"] {
-        background: #FFFFFF !important;
-        color: #000000 !important;
-        border: none !important;
+        background: #18181B !important;
+        color: #FFFFFF !important;
+        border: 1px solid #18181B !important;
     }
     button[kind="primary"]:hover {
-        background: #E5E5E5 !important;
+        background: #27272A !important;
         transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
 
+    /* Secondary White/Gray Button */
     button[kind="secondary"] {
-        background: #111111 !important;
-        color: #FFFFFF !important;
-        border: 1px solid #333333 !important;
+        background: #FFFFFF !important;
+        color: #18181B !important;
+        border: 1px solid #E4E4E7 !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
     }
     button[kind="secondary"]:hover {
-        background: #1A1A1A !important;
-        border-color: #444444 !important;
+        background: #F4F4F5 !important;
+        border-color: #D4D4D8 !important;
     }
 
     /* Input Fields */
     .stTextInput input {
-        background-color: #0A0A0A !important;
-        border: 1px solid #333333 !important;
-        color: #FFFFFF !important;
+        background-color: #FFFFFF !important;
+        border: 1px solid #E4E4E7 !important;
+        color: #18181B !important;
         border-radius: 8px !important;
         padding: 12px 16px !important;
         font-size: 0.95rem !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
     }
     .stTextInput input:focus {
-        border-color: #3B82F6 !important;
-        box-shadow: 0 0 0 1px #3B82F6 !important;
+        border-color: #18181B !important;
+        box-shadow: 0 0 0 1px #18181B !important;
+    }
+    .stTextInput input::placeholder {
+        color: #A1A1AA !important;
     }
 
     /* --- DASHBOARD STYLES --- */
-    .top-nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 16px 32px;
-        border-bottom: 1px solid #1A1A1A;
-        background: rgba(0,0,0,0.5);
-        backdrop-filter: blur(10px);
-        margin-bottom: 40px;
-    }
-    
     .nav-brand {
         font-size: 1.1rem;
         font-weight: 600;
-        color: #FFFFFF;
+        color: #18181B;
         display: flex;
         align-items: center;
         gap: 12px;
     }
 
-    .workspace-container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 0 24px;
-    }
-    
     .workspace-header {
         font-size: 2rem;
         font-weight: 600;
-        color: #FFFFFF;
+        color: #09090B;
         margin-bottom: 8px;
         letter-spacing: -0.02em;
     }
     
     .workspace-sub {
-        color: #A1A1AA;
+        color: #71717A;
         font-size: 1rem;
         margin-bottom: 32px;
     }
 
     /* File Uploader styling */
     [data-testid="stFileUploadDropzone"] {
-        background-color: #0A0A0A !important;
-        border: 1px dashed #333333 !important;
+        background-color: #FFFFFF !important;
+        border: 1px dashed #D4D4D8 !important;
         border-radius: 12px !important;
         padding: 40px !important;
         transition: all 0.2s ease;
     }
     [data-testid="stFileUploadDropzone"]:hover {
-        border-color: #444444 !important;
-        background-color: #0F0F0F !important;
+        border-color: #18181B !important;
+        background-color: #FAFAFA !important;
+    }
+    [data-testid="stFileUploadDropzone"] * {
+        color: #71717A !important;
     }
     
     /* Metrics */
     div[data-testid="stMetric"] {
-        background-color: #0A0A0A;
-        border: 1px solid #222222;
+        background-color: #FFFFFF;
+        border: 1px solid #E4E4E7;
         padding: 16px 20px;
         border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
     }
     div[data-testid="stMetricLabel"] {
-        color: #A1A1AA !important;
+        color: #71717A !important;
         font-weight: 500 !important;
     }
     div[data-testid="stMetricValue"] {
-        color: #FFFFFF !important;
+        color: #18181B !important;
     }
     
     /* Dataframes */
     [data-testid="stDataFrame"] {
-        border: 1px solid #222222;
+        border: 1px solid #E4E4E7;
         border-radius: 12px;
         overflow: hidden;
+        background: #FFFFFF;
+    }
+    
+    /* Labels and small text */
+    p, label {
+        color: #3F3F46 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -229,7 +232,7 @@ def render_login_page():
 
     auth_url = st.session_state.auth_url
 
-    # Centered column layout to act as a spacer
+    # Centered column layout
     _, col, _ = st.columns([1, 1.2, 1])
     
     with col:
@@ -240,18 +243,18 @@ def render_login_page():
                 <div class="login-title">Welcome back</div>
                 <div class="login-subtitle">Sign in to manage Campaign Manager 360</div>
                 <a href="{auth_url}" target="_blank" style="text-decoration: none;">
-                    <button style="width: 100%; background: #FFFFFF; color: #000000; border: none; padding: 12px; border-radius: 8px; font-weight: 500; cursor: pointer; font-family: Inter, sans-serif; transition: background 0.2s;">
+                    <button style="width: 100%; background: #18181B; color: #FFFFFF; border: none; padding: 12px; border-radius: 8px; font-weight: 500; cursor: pointer; font-family: Inter, sans-serif; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                         Connect Google Account
                     </button>
                 </a>
-                <div style="margin: 24px 0; display: flex; align-items: center; color: #333; font-size: 0.85rem;">
-                    <div style="flex-grow: 1; height: 1px; background: #222;"></div>
-                    <span style="padding: 0 12px; color: #666;">or paste code</span>
-                    <div style="flex-grow: 1; height: 1px; background: #222;"></div>
+                <div style="margin: 24px 0; display: flex; align-items: center; color: #A1A1AA; font-size: 0.85rem;">
+                    <div style="flex-grow: 1; height: 1px; background: #E4E4E7;"></div>
+                    <span style="padding: 0 12px;">or paste code</span>
+                    <div style="flex-grow: 1; height: 1px; background: #E4E4E7;"></div>
                 </div>
         """, unsafe_allow_html=True)
         
-        # Streamlit input rendered inside the faked HTML card visually
+        # Input mapped to visual card
         auth_code = st.text_input("Auth Code", label_visibility="collapsed", placeholder="Paste authorization code...")
         
         if auth_code:
@@ -277,7 +280,6 @@ def render_login_page():
 def render_workspace(creds):
     service = build(API_SERVICE_NAME, API_VERSION, credentials=creds)
 
-    # Fetch profiles silently
     try:
         profiles_response = service.userProfiles().list().execute()
         profiles = profiles_response.get('items', [])
@@ -290,33 +292,28 @@ def render_workspace(creds):
         st.stop()
 
     # --- Top Navigation Bar ---
-    # We use columns to layout the top bar seamlessly
     nav_col1, nav_col2, nav_col3 = st.columns([2, 1.5, 0.5])
     with nav_col1:
         st.markdown("<div class='nav-brand'>⚡ CM360 Workspace</div>", unsafe_allow_html=True)
     with nav_col2:
-        # Integrated profile selector in the nav bar
         selected_profile_key = st.selectbox("Profile", options=list(profile_dict.keys()), label_visibility="collapsed")
         profile_id = profile_dict[selected_profile_key]
     with nav_col3:
-        # Logout button
         if st.button("Log out", type="secondary", use_container_width=True):
             del st.session_state['creds']
             st.rerun()
             
-    st.markdown("<hr style='border: none; height: 1px; background-color: #1A1A1A; margin: 0 0 40px 0;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: none; height: 1px; background-color: #E4E4E7; margin: 0 0 40px 0;'>", unsafe_allow_html=True)
 
     # --- Main Workspace Content ---
-    _, main_col, _ = st.columns([1, 4, 1]) # Center the content
+    _, main_col, _ = st.columns([1, 4, 1]) 
     
     with main_col:
         st.markdown("<div class='workspace-header'>Generate Event Tags</div>", unsafe_allow_html=True)
         st.markdown("<div class='workspace-sub'>Upload your structured CSV to create tags in bulk.</div>", unsafe_allow_html=True)
 
-        # File Uploader
         uploaded_file = st.file_uploader("Drop your CSV file here", type=["csv"], label_visibility="collapsed")
 
-        # Action Area
         if uploaded_file:
             df = pd.read_csv(uploaded_file)
             df.columns = df.columns.str.strip()
@@ -327,7 +324,7 @@ def render_workspace(creds):
             if missing_cols:
                 st.error(f"❌ Invalid format. Missing columns: `{', '.join(missing_cols)}`")
             else:
-                st.markdown("<br><p style='font-size: 0.9rem; color: #A1A1AA; margin-bottom: 8px; font-weight: 500;'>DATA PREVIEW</p>", unsafe_allow_html=True)
+                st.markdown("<br><p style='font-size: 0.8rem; color: #71717A; margin-bottom: 8px; font-weight: 600; letter-spacing: 0.05em;'>DATA PREVIEW</p>", unsafe_allow_html=True)
                 st.dataframe(df, use_container_width=True, height=200)
 
                 invalid_urls = df[~df['Tag URL'].astype(str).str.startswith('https://')]
@@ -336,7 +333,6 @@ def render_workspace(creds):
 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                # Execution Trigger
                 if st.button("Generate Tags", type="primary"):
                     progress_bar = st.progress(0)
                     status_text = st.empty()
@@ -375,8 +371,7 @@ def render_workspace(creds):
                         progress_bar.progress((index + 1) / len(df))
                         status_text.caption(f"Processing: {tag_name}")
 
-                    # Results Dashboard
-                    st.markdown("<br><p style='font-size: 0.9rem; color: #A1A1AA; margin-bottom: 8px; font-weight: 500;'>EXECUTION SUMMARY</p>", unsafe_allow_html=True)
+                    st.markdown("<br><p style='font-size: 0.8rem; color: #71717A; margin-bottom: 8px; font-weight: 600; letter-spacing: 0.05em;'>EXECUTION SUMMARY</p>", unsafe_allow_html=True)
                     m1, m2, m3 = st.columns(3)
                     m1.metric("Total Executed", len(df))
                     m2.metric("Successful", success_count)
@@ -388,7 +383,6 @@ def render_workspace(creds):
                     csv_export = res_df.to_csv(index=False).encode('utf-8')
                     st.download_button("Download Audit Log", data=csv_export, file_name="tag_log.csv", mime="text/csv", type="secondary")
 
-        # Download Template Link (always available at the bottom)
         st.markdown("<br><br>", unsafe_allow_html=True)
         with st.expander("Need a starter template?"):
             sample_df = pd.DataFrame([{
@@ -407,10 +401,8 @@ def render_workspace(creds):
 # APP ROUTING LOGIC
 # ==========================================
 def main():
-    # If not authenticated, show ONLY the login page
     if 'creds' not in st.session_state or not st.session_state.creds or not st.session_state.creds.valid:
         render_login_page()
-    # If authenticated, show ONLY the workspace
     else:
         render_workspace(st.session_state.creds)
 
