@@ -13,14 +13,14 @@ API_VERSION = 'v4'
 st.set_page_config(page_title="CM360 Bulk Event Tags", layout="wide")
 st.title("Campaign Manager 360: Bulk Event Tag Creator")
 
-# Load the secret we created in the previous step
+# Load the secret from Streamlit Cloud
 if "client_secrets" not in st.secrets:
-    st.error("Missing secrets! Please make sure .streamlit/secrets.toml is configured.")
+    st.error("Missing secrets! Please make sure the 'client_secrets' block is configured in your Streamlit App Settings.")
     st.stop()
 
 # Parse the JSON string from secrets
 client_config = json.loads(st.secrets["client_secrets"])
-# Extract the redirect URI dynamically so it works locally and on the cloud
+# Extract the redirect URI dynamically
 REDIRECT_URI = client_config["web"]["redirect_uris"][0] 
 
 # --- 2. Web Authentication Flow ---
@@ -31,26 +31,34 @@ def authenticate():
         redirect_uri=REDIRECT_URI
     )
 
-    # Check if user is already logged in during this session
+    # 1. Check if token already exists in the user's session
     if 'creds_token' in st.session_state:
         creds = Credentials.from_authorized_user_info(st.session_state['creds_token'], SCOPES)
         if creds.valid:
             return build(API_SERVICE_NAME, API_VERSION, credentials=creds)
 
-    # Check if Google just redirected the user back with an auth code in the URL
+    # 2. Check if the URL contains the auth code (user just logged in)
     if 'code' in st.query_params:
         auth_code = st.query_params['code']
-        flow.fetch_token(code=auth_code)
-        creds = flow.credentials
-        
-        # Save token to session and clear the URL so it looks clean
-        st.session_state['creds_token'] = json.loads(creds.to_json())
-        st.query_params.clear()
-        st.rerun()
+        try:
+            # Try to exchange the code for a token
+            flow.fetch_token(code=auth_code)
+            creds = flow.credentials
+            
+            # Save token to session and clear the URL so it looks clean
+            st.session_state['creds_token'] = json.loads(creds.to_json())
+            st.query_params.clear()
+            st.rerun()
+            
+        except Exception as e:
+            # If the code was already used or expired, clear the URL and stop gracefully
+            st.query_params.clear()
+            st.warning("Login session expired or the page was refreshed. Please click Login again.")
+            st.stop()
 
-    # If neither, present the login button
+    # 3. If neither, present the login button
     auth_url, _ = flow.authorization_url(prompt='consent')
-    st.info("Please log in with your Google account to access CM360.")
+    st.info("Please log in with your Google account to access Campaign Manager 360.")
     st.link_button("Login with Google", auth_url, type="primary")
     st.stop() # Halts the rest of the app until they log in
 
@@ -117,7 +125,7 @@ if service:
                 elif level == 'CAMPAIGN':
                     tag_payload["campaignId"] = str(row['Parent ID'])
                 else:
-                    results.append({"Tag Name": row['Tag Name'], "Status": "Failed: Invalid Level", "ID": None})
+                    results.append({"Tag Name": row['Tag Name'], "Status": "Failed: Invalid Level (Must be ADVERTISER or CAMPAIGN)", "ID": None})
                     continue
                     
                 # Call the CM360 API
@@ -127,6 +135,7 @@ if service:
                     results.append({"Tag Name": row['Tag Name'], "Status": "Success", "ID": response['id']})
                     
                 except Exception as e:
+                    # Catch API errors (e.g. invalid URL format, non-whitelisted domain, wrong parent ID)
                     results.append({"Tag Name": row['Tag Name'], "Status": f"Failed: {e}", "ID": None})
                     
                 # Update visual progress
@@ -138,5 +147,6 @@ if service:
             results_df = pd.DataFrame(results)
             st.dataframe(results_df)
             
+            # Allow users to download the success/fail log
             csv_export = results_df.to_csv(index=False).encode('utf-8')
             st.download_button("Download QA Results", data=csv_export, file_name="event_tag_results.csv", mime="text/csv")
