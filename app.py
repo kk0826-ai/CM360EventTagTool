@@ -7,7 +7,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 # --- Page Config (Must be first) ---
-st.set_page_config(page_title="CM360 Tags | Workspace", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="CM360 Workspace", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
 # --- API Config ---
 SCOPES = ['https://www.googleapis.com/auth/dfatrafficking']
@@ -18,7 +18,7 @@ if "client_secrets" not in st.secrets:
     st.error("⚠️ Missing 'client_secrets' in Streamlit secrets configuration.")
     st.stop()
 
-# --- Minimal Light SaaS CSS Injection ---
+# --- High-Contrast SaaS CSS Injection ---
 st.markdown("""
     <style>
     /* Import Inter Font */
@@ -28,67 +28,93 @@ st.markdown("""
         font-family: 'Inter', sans-serif !important;
     }
     
-    /* Hide Default Streamlit UI */
+    /* Hide Default Streamlit Chrome */
     #MainMenu, header, footer {display: none !important;}
     section[data-testid="stSidebar"] {display: none !important;}
     
-    /* Global Background - Crisp Off-White */
+    /* Global App Background - Cool Light Gray for contrast */
     .stApp {
-        background-color: #FAFAFA !important; 
-        background-image: none !important;
-        color: #18181B !important; 
+        background-color: #F4F4F5 !important;
+        color: #18181B !important;
     }
 
     /* --- LOGIN PAGE STYLES --- */
-    .login-wrapper {
+    .login-container {
         display: flex;
-        flex-direction: column;
-        align-items: center;
         justify-content: center;
-        margin-top: 8vh;
+        align-items: center;
+        min-height: 80vh;
     }
     
     .login-card {
         background: #FFFFFF;
         border: 1px solid #E4E4E7;
         border-radius: 16px;
-        padding: 48px 40px;
+        padding: 40px;
         width: 100%;
-        max-width: 440px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.02);
+        max-width: 420px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+    }
+    
+    .login-header {
         text-align: center;
+        margin-bottom: 32px;
     }
     
     .login-logo {
         width: 48px;
         height: 48px;
-        background: #FFFFFF;
-        border: 1px solid #E4E4E7;
+        background: #18181B;
+        color: #FFFFFF;
         border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 24px;
-        margin: 0 auto 24px auto;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        margin: 0 auto 16px auto;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
     
     .login-title {
         font-size: 1.5rem;
-        font-weight: 600;
+        font-weight: 700;
         color: #09090B;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         letter-spacing: -0.02em;
     }
     
     .login-subtitle {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
         color: #71717A;
-        margin-bottom: 32px;
-        line-height: 1.5;
     }
 
-    /* Override Streamlit Buttons */
+    /* Step Indicators */
+    .step-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .step-num {
+        background: #F4F4F5;
+        color: #18181B;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border: 1px solid #E4E4E7;
+    }
+    .step-text {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #3F3F46;
+    }
+
+    /* --- OVERRIDE STREAMLIT ELEMENTS --- */
     .stButton>button {
         width: 100%;
         border-radius: 8px !important;
@@ -97,24 +123,25 @@ st.markdown("""
         transition: all 0.2s ease;
     }
     
-    /* Primary Black Button */
+    /* Primary Action Button (Login / Generate) */
     button[kind="primary"] {
         background: #18181B !important;
         color: #FFFFFF !important;
-        border: 1px solid #18181B !important;
+        border: none !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     }
     button[kind="primary"]:hover {
         background: #27272A !important;
         transform: translateY(-1px);
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.12) !important;
     }
 
-    /* Secondary White/Gray Button */
+    /* Secondary Button (Logout / Download) */
     button[kind="secondary"] {
         background: #FFFFFF !important;
         color: #18181B !important;
         border: 1px solid #E4E4E7 !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
     }
     button[kind="secondary"]:hover {
         background: #F4F4F5 !important;
@@ -124,88 +151,83 @@ st.markdown("""
     /* Input Fields */
     .stTextInput input {
         background-color: #FFFFFF !important;
-        border: 1px solid #E4E4E7 !important;
+        border: 1px solid #D4D4D8 !important;
         color: #18181B !important;
         border-radius: 8px !important;
         padding: 12px 16px !important;
         font-size: 0.95rem !important;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02) !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02) inset !important;
     }
     .stTextInput input:focus {
-        border-color: #18181B !important;
-        box-shadow: 0 0 0 1px #18181B !important;
-    }
-    .stTextInput input::placeholder {
-        color: #A1A1AA !important;
+        border-color: #2563EB !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2) !important;
     }
 
-    /* --- DASHBOARD STYLES --- */
-    .nav-brand {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #18181B;
+    /* --- DASHBOARD WORKSPACE STYLES --- */
+    .top-nav {
+        background: #FFFFFF;
+        border-bottom: 1px solid #E4E4E7;
+        padding: 16px 32px;
         display: flex;
+        justify-content: space-between;
         align-items: center;
-        gap: 12px;
+        margin-bottom: 32px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    
+    .workspace-card {
+        background: #FFFFFF;
+        border: 1px solid #E4E4E7;
+        border-radius: 12px;
+        padding: 32px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+        margin-bottom: 24px;
     }
 
     .workspace-header {
-        font-size: 2rem;
+        font-size: 1.5rem;
         font-weight: 600;
         color: #09090B;
-        margin-bottom: 8px;
-        letter-spacing: -0.02em;
+        margin-bottom: 4px;
     }
     
     .workspace-sub {
         color: #71717A;
-        font-size: 1rem;
-        margin-bottom: 32px;
+        font-size: 0.95rem;
+        margin-bottom: 24px;
     }
 
-    /* File Uploader styling */
+    /* Uploader & DataFrames */
     [data-testid="stFileUploadDropzone"] {
-        background-color: #FFFFFF !important;
+        background-color: #FAFAFA !important;
         border: 1px dashed #D4D4D8 !important;
-        border-radius: 12px !important;
-        padding: 40px !important;
-        transition: all 0.2s ease;
+        border-radius: 8px !important;
+        padding: 32px !important;
     }
     [data-testid="stFileUploadDropzone"]:hover {
-        border-color: #18181B !important;
-        background-color: #FAFAFA !important;
-    }
-    [data-testid="stFileUploadDropzone"] * {
-        color: #71717A !important;
+        background-color: #F4F4F5 !important;
+        border-color: #A1A1AA !important;
     }
     
+    [data-testid="stDataFrame"] {
+        border: 1px solid #E4E4E7;
+        border-radius: 8px;
+        background: #FFFFFF;
+    }
+
     /* Metrics */
     div[data-testid="stMetric"] {
-        background-color: #FFFFFF;
+        background-color: #FAFAFA;
         border: 1px solid #E4E4E7;
         padding: 16px 20px;
-        border-radius: 12px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        border-radius: 8px;
     }
     div[data-testid="stMetricLabel"] {
         color: #71717A !important;
         font-weight: 500 !important;
     }
     div[data-testid="stMetricValue"] {
-        color: #18181B !important;
-    }
-    
-    /* Dataframes */
-    [data-testid="stDataFrame"] {
-        border: 1px solid #E4E4E7;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #FFFFFF;
-    }
-    
-    /* Labels and small text */
-    p, label {
-        color: #3F3F46 !important;
+        color: #09090B !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -232,30 +254,37 @@ def render_login_page():
 
     auth_url = st.session_state.auth_url
 
-    # Centered column layout
+    # Centered layout using columns
     _, col, _ = st.columns([1, 1.2, 1])
     
     with col:
         st.markdown(f"""
-        <div class="login-wrapper">
+        <div class="login-container">
             <div class="login-card">
-                <div class="login-logo">⚡</div>
-                <div class="login-title">Welcome back</div>
-                <div class="login-subtitle">Sign in to manage Campaign Manager 360</div>
+                <div class="login-header">
+                    <div class="login-logo">⚡</div>
+                    <div class="login-title">Sign in to CM360</div>
+                    <div class="login-subtitle">Connect your Google account to continue</div>
+                </div>
+                
+                <div class="step-box">
+                    <div class="step-num">1</div>
+                    <div class="step-text">Generate Google Auth Code</div>
+                </div>
                 <a href="{auth_url}" target="_blank" style="text-decoration: none;">
-                    <button style="width: 100%; background: #18181B; color: #FFFFFF; border: none; padding: 12px; border-radius: 8px; font-weight: 500; cursor: pointer; font-family: Inter, sans-serif; transition: background 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
-                        Connect Google Account
+                    <button style="width: 100%; background: #FFFFFF; color: #18181B; border: 1px solid #E4E4E7; padding: 10px; border-radius: 8px; font-weight: 500; cursor: pointer; font-family: Inter, sans-serif; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 24px;">
+                        Open Google Login Tab ↗
                     </button>
                 </a>
-                <div style="margin: 24px 0; display: flex; align-items: center; color: #A1A1AA; font-size: 0.85rem;">
-                    <div style="flex-grow: 1; height: 1px; background: #E4E4E7;"></div>
-                    <span style="padding: 0 12px;">or paste code</span>
-                    <div style="flex-grow: 1; height: 1px; background: #E4E4E7;"></div>
+
+                <div class="step-box">
+                    <div class="step-num">2</div>
+                    <div class="step-text">Paste Code to Authenticate</div>
                 </div>
         """, unsafe_allow_html=True)
         
-        # Input mapped to visual card
-        auth_code = st.text_input("Auth Code", label_visibility="collapsed", placeholder="Paste authorization code...")
+        # Streamlit Input (Visually tucked under Step 2)
+        auth_code = st.text_input("Auth Code", label_visibility="collapsed", placeholder="Enter the code here...")
         
         if auth_code:
             try:
@@ -291,26 +320,37 @@ def render_workspace(creds):
         st.error(f"API Error: {e}")
         st.stop()
 
-    # --- Top Navigation Bar ---
-    nav_col1, nav_col2, nav_col3 = st.columns([2, 1.5, 0.5])
-    with nav_col1:
-        st.markdown("<div class='nav-brand'>⚡ CM360 Workspace</div>", unsafe_allow_html=True)
-    with nav_col2:
-        selected_profile_key = st.selectbox("Profile", options=list(profile_dict.keys()), label_visibility="collapsed")
+    # --- Top Navigation Bar (Full Width) ---
+    st.markdown("""
+        <div class='top-nav' style='margin-top: -3rem; margin-left: -3rem; margin-right: -3rem;'>
+            <div style='font-weight: 700; font-size: 1.1rem; color: #18181B; display: flex; align-items: center; gap: 8px;'>
+                <div style='background: #18181B; color: white; padding: 4px 8px; border-radius: 6px; font-size: 0.9rem;'>⚡</div>
+                CM360 Tags Workspace
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # --- Profile & Logout Controls (Positioned right below nav) ---
+    nav_c1, nav_c2, nav_c3, nav_c4 = st.columns([6, 2, 0.2, 1])
+    with nav_c2:
+        selected_profile_key = st.selectbox("Active Profile", options=list(profile_dict.keys()), label_visibility="collapsed")
         profile_id = profile_dict[selected_profile_key]
-    with nav_col3:
-        if st.button("Log out", type="secondary", use_container_width=True):
+    with nav_c4:
+        if st.button("Log out", type="secondary"):
             del st.session_state['creds']
             st.rerun()
             
-    st.markdown("<hr style='border: none; height: 1px; background-color: #E4E4E7; margin: 0 0 40px 0;'>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # --- Main Workspace Content ---
-    _, main_col, _ = st.columns([1, 4, 1]) 
+    _, main_col, _ = st.columns([1, 6, 1]) 
     
     with main_col:
-        st.markdown("<div class='workspace-header'>Generate Event Tags</div>", unsafe_allow_html=True)
-        st.markdown("<div class='workspace-sub'>Upload your structured CSV to create tags in bulk.</div>", unsafe_allow_html=True)
+        st.markdown("""
+            <div class='workspace-card'>
+                <div class='workspace-header'>Generate Event Tags</div>
+                <div class='workspace-sub'>Upload your structured CSV to create impression and click tags in bulk.</div>
+        """, unsafe_allow_html=True)
 
         uploaded_file = st.file_uploader("Drop your CSV file here", type=["csv"], label_visibility="collapsed")
 
@@ -324,7 +364,7 @@ def render_workspace(creds):
             if missing_cols:
                 st.error(f"❌ Invalid format. Missing columns: `{', '.join(missing_cols)}`")
             else:
-                st.markdown("<br><p style='font-size: 0.8rem; color: #71717A; margin-bottom: 8px; font-weight: 600; letter-spacing: 0.05em;'>DATA PREVIEW</p>", unsafe_allow_html=True)
+                st.markdown("<p style='font-size: 0.8rem; color: #71717A; margin-top: 24px; font-weight: 600; letter-spacing: 0.05em;'>DATA PREVIEW</p>", unsafe_allow_html=True)
                 st.dataframe(df, use_container_width=True, height=200)
 
                 invalid_urls = df[~df['Tag URL'].astype(str).str.startswith('https://')]
@@ -333,7 +373,8 @@ def render_workspace(creds):
 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                if st.button("Generate Tags", type="primary"):
+                # Execution Trigger
+                if st.button("🚀 Generate Tags in CM360", type="primary"):
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     results = []
@@ -371,6 +412,7 @@ def render_workspace(creds):
                         progress_bar.progress((index + 1) / len(df))
                         status_text.caption(f"Processing: {tag_name}")
 
+                    # Results Dashboard
                     st.markdown("<br><p style='font-size: 0.8rem; color: #71717A; margin-bottom: 8px; font-weight: 600; letter-spacing: 0.05em;'>EXECUTION SUMMARY</p>", unsafe_allow_html=True)
                     m1, m2, m3 = st.columns(3)
                     m1.metric("Total Executed", len(df))
@@ -383,7 +425,10 @@ def render_workspace(creds):
                     csv_export = res_df.to_csv(index=False).encode('utf-8')
                     st.download_button("Download Audit Log", data=csv_export, file_name="tag_log.csv", mime="text/csv", type="secondary")
 
-        st.markdown("<br><br>", unsafe_allow_html=True)
+        # Close workspace card HTML
+        st.markdown("</div>", unsafe_allow_html=True)
+
+        # Download Template Link
         with st.expander("Need a starter template?"):
             sample_df = pd.DataFrame([{
                 "Tag Name": "Example_Pixel",
