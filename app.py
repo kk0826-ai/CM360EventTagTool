@@ -13,28 +13,42 @@ SCOPES = ['https://www.googleapis.com/auth/dfareporting']
 API_SERVICE_NAME = 'dfareporting'
 API_VERSION = 'v4' 
 
-# --- Authentication Logic (Adapted from your DV360 tool) ---
+# Load secrets
+if "client_secrets" not in st.secrets:
+    st.error("Missing secrets! Please make sure your secrets are configured.")
+    st.stop()
+
+# --- Authentication Logic ---
 def get_creds():
     # 1. Check if token already exists in the user's session
     if 'creds' in st.session_state and st.session_state.creds and st.session_state.creds.valid:
         return st.session_state.creds
 
-    # 2. Start the Manual Copy-Paste Flow
-    try:
-        # Assuming you pasted the Desktop App JSON directly into Streamlit Secrets
-        # e.g., using a variable named `client_secrets`
-        client_config = json.loads(st.secrets["client_secrets"])
-        flow = InstalledAppFlow.from_client_config(
-            client_config, 
-            SCOPES, 
-            redirect_uri='urn:ietf:wg:oauth:2.0:oob'
-        )
-    except Exception as e:
-        st.error(f"Failed to load secrets. Make sure your secrets are configured. Error: {e}")
-        return None
+    # 2. Create the Flow and save it to Session State so it survives reruns
+    if 'oauth_flow' not in st.session_state:
+        try:
+            client_config = json.loads(st.secrets["client_secrets"])
+            flow = InstalledAppFlow.from_client_config(
+                client_config, 
+                SCOPES, 
+                redirect_uri='urn:ietf:wg:oauth:2.0:oob'
+            )
+            # Save the flow instance
+            st.session_state.oauth_flow = flow
+            
+            # Generate the auth URL and save it too
+            auth_url, _ = flow.authorization_url(prompt='consent')
+            st.session_state.auth_url = auth_url
+            
+        except Exception as e:
+            st.error(f"Failed to load secrets. Error: {e}")
+            return None
 
-    # Generate the authorization URL
-    auth_url, _ = flow.authorization_url(prompt='consent')
+    # Retrieve the saved flow and URL from session state
+    flow = st.session_state.oauth_flow
+    auth_url = st.session_state.auth_url
+
+    # Display the login instructions
     st.info("Please log in with your Google account to access Campaign Manager 360.")
     st.markdown(f"### [🔗 Click here to get your Authorization Code]({auth_url})", unsafe_allow_html=True)
     
@@ -43,17 +57,26 @@ def get_creds():
     
     if auth_code:
         try:
-            # Exchange the pasted code for a token
+            # Exchange the pasted code using the EXACT SAME flow object
             flow.fetch_token(code=auth_code)
             creds = flow.credentials
             
             # Save the valid credentials into session state
             st.session_state.creds = creds
+            
+            # Clean up the session state so it's fresh for next time
+            del st.session_state['oauth_flow']
+            del st.session_state['auth_url']
+            
             st.success("Authentication successful!")
             st.rerun() # Refresh the page to show the main tool
             
         except Exception as e:
-            st.error(f"Error fetching token (the code might be expired or invalid): {e}")
+            st.error(f"Error fetching token: {e}. Please clear this box, refresh the page, and try again.")
+            # Clear the flow so they can start over if they messed up
+            if 'oauth_flow' in st.session_state:
+                del st.session_state['oauth_flow']
+                del st.session_state['auth_url']
             
     return None
 
