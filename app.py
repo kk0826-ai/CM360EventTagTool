@@ -236,9 +236,6 @@ st.markdown("""
 # ==========================================
 # 1. AUTHENTICATION & LOGIN VIEW
 # ==========================================
-# ==========================================
-# 1. AUTHENTICATION & LOGIN VIEW
-# ==========================================
 def render_login_page():
     if 'oauth_flow' not in st.session_state:
         try:
@@ -261,8 +258,7 @@ def render_login_page():
     _, col, _ = st.columns([1, 1.2, 1])
     
     with col:
-        # NOTE: The HTML below is intentionally pushed to the far left margin
-        # to prevent Streamlit from turning it into a Markdown code block!
+        # Note: HTML is kept strictly left-aligned so Streamlit doesn't render it as a code block
         st.markdown(f"""
 <div class="login-container">
     <div class="login-card">
@@ -305,7 +301,7 @@ def render_login_page():
                     del st.session_state['oauth_flow']
                     del st.session_state['auth_url']
         
-        # Close the div tags, also aligned left
+        # Close the div tags, also left-aligned
         st.markdown("""
     </div>
 </div>
