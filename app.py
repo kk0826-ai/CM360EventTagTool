@@ -6,52 +6,212 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-# --- Page Setup ---
-st.set_page_config(
-    page_title="CM360 Bulk Event Tag Tool",
-    page_icon="🏷️",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# --- Page Config (Must be first) ---
+st.set_page_config(page_title="CM360 Tags | Workspace", page_icon="⚡", layout="wide", initial_sidebar_state="collapsed")
 
-# --- Configuration ---
+# --- API Config ---
 SCOPES = ['https://www.googleapis.com/auth/dfatrafficking']
 API_SERVICE_NAME = 'dfareporting'
 API_VERSION = 'v5'
 
-# Load secrets
 if "client_secrets" not in st.secrets:
-    st.error("⚠️ Missing secrets configuration! Please check your Streamlit App Settings.")
+    st.error("⚠️ Missing 'client_secrets' in Streamlit secrets configuration.")
     st.stop()
 
-# --- Custom Styling for Classic Enterprise UI ---
+# --- Advanced SaaS CSS Injection ---
 st.markdown("""
     <style>
-    .main-header {
+    /* Import Inter Font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    /* Hide Default Streamlit UI */
+    #MainMenu, header, footer {display: none !important;}
+    section[data-testid="stSidebar"] {display: none !important;}
+    
+    /* Global Background */
+    .stApp {
+        background-color: #000000;
+        color: #EDEDED;
+        background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #000000 70%);
+        background-attachment: fixed;
+    }
+
+    /* --- LOGIN PAGE STYLES --- */
+    .login-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-top: 8vh;
+    }
+    
+    .login-card {
+        background: #0A0A0A;
+        border: 1px solid #222222;
+        border-radius: 16px;
+        padding: 48px 40px;
+        width: 100%;
+        max-width: 440px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1);
+        text-align: center;
+    }
+    
+    .login-logo {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #3B82F6, #8B5CF6);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin: 0 auto 24px auto;
+    }
+    
+    .login-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #FFFFFF;
+        margin-bottom: 8px;
+    }
+    
+    .login-subtitle {
+        font-size: 0.95rem;
+        color: #A1A1AA;
+        margin-bottom: 32px;
+        line-height: 1.5;
+    }
+
+    /* Override Streamlit Buttons */
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px !important;
+        font-weight: 500 !important;
+        height: 44px;
+        transition: all 0.2s ease;
+    }
+    
+    button[kind="primary"] {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        border: none !important;
+    }
+    button[kind="primary"]:hover {
+        background: #E5E5E5 !important;
+        transform: translateY(-1px);
+    }
+
+    button[kind="secondary"] {
+        background: #111111 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #333333 !important;
+    }
+    button[kind="secondary"]:hover {
+        background: #1A1A1A !important;
+        border-color: #444444 !important;
+    }
+
+    /* Input Fields */
+    .stTextInput input {
+        background-color: #0A0A0A !important;
+        border: 1px solid #333333 !important;
+        color: #FFFFFF !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 0.95rem !important;
+    }
+    .stTextInput input:focus {
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 1px #3B82F6 !important;
+    }
+
+    /* --- DASHBOARD STYLES --- */
+    .top-nav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 32px;
+        border-bottom: 1px solid #1A1A1A;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(10px);
+        margin-bottom: 40px;
+    }
+    
+    .nav-brand {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #FFFFFF;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .workspace-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 24px;
+    }
+    
+    .workspace-header {
         font-size: 2rem;
-        font-weight: 700;
-        color: #1E293B;
-        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #FFFFFF;
+        margin-bottom: 8px;
+        letter-spacing: -0.02em;
     }
-    .sub-header {
+    
+    .workspace-sub {
+        color: #A1A1AA;
         font-size: 1rem;
-        color: #64748B;
-        margin-bottom: 2rem;
+        margin-bottom: 32px;
     }
-    .stMetric {
-        background-color: #F8FAFC;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid #E2E8F0;
+
+    /* File Uploader styling */
+    [data-testid="stFileUploadDropzone"] {
+        background-color: #0A0A0A !important;
+        border: 1px dashed #333333 !important;
+        border-radius: 12px !important;
+        padding: 40px !important;
+        transition: all 0.2s ease;
+    }
+    [data-testid="stFileUploadDropzone"]:hover {
+        border-color: #444444 !important;
+        background-color: #0F0F0F !important;
+    }
+    
+    /* Metrics */
+    div[data-testid="stMetric"] {
+        background-color: #0A0A0A;
+        border: 1px solid #222222;
+        padding: 16px 20px;
+        border-radius: 12px;
+    }
+    div[data-testid="stMetricLabel"] {
+        color: #A1A1AA !important;
+        font-weight: 500 !important;
+    }
+    div[data-testid="stMetricValue"] {
+        color: #FFFFFF !important;
+    }
+    
+    /* Dataframes */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #222222;
+        border-radius: 12px;
+        overflow: hidden;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- Authentication Logic ---
-def get_creds():
-    if 'creds' in st.session_state and st.session_state.creds and st.session_state.creds.valid:
-        return st.session_state.creds
 
+# ==========================================
+# 1. AUTHENTICATION & LOGIN VIEW
+# ==========================================
+def render_login_page():
     if 'oauth_flow' not in st.session_state:
         try:
             client_config = json.loads(st.secrets["client_secrets"])
@@ -64,245 +224,195 @@ def get_creds():
             auth_url, _ = flow.authorization_url(prompt='consent')
             st.session_state.auth_url = auth_url
         except Exception as e:
-            st.error(f"Failed to initialize authentication flow: {e}")
+            st.error(f"Configuration Error: {e}")
             return None
 
-    flow = st.session_state.oauth_flow
     auth_url = st.session_state.auth_url
 
-    st.markdown("<div class='main-header'>🔐 CM360 Authentication</div>", unsafe_allow_html=True)
-    st.info("Log in with your Google account authorized for Campaign Manager 360.")
-    st.markdown(f"#### 1. [Click here to get your Authorization Code]({auth_url})", unsafe_allow_html=True)
+    # Centered column layout to act as a spacer
+    _, col, _ = st.columns([1, 1.2, 1])
     
-    auth_code = st.text_input("#### 2. Paste your Authorization Code below:", type="password")
-    
-    if auth_code:
-        try:
-            flow.fetch_token(code=auth_code)
-            creds = flow.credentials
-            st.session_state.creds = creds
-            
-            # Clean session state
-            del st.session_state['oauth_flow']
-            del st.session_state['auth_url']
-            
-            st.success("Authentication successful!")
-            st.rerun()
-        except Exception as e:
-            st.error(f"Error fetching token: {e}")
-            if 'oauth_flow' in st.session_state:
+    with col:
+        st.markdown(f"""
+        <div class="login-wrapper">
+            <div class="login-card">
+                <div class="login-logo">⚡</div>
+                <div class="login-title">Welcome back</div>
+                <div class="login-subtitle">Sign in to manage Campaign Manager 360</div>
+                <a href="{auth_url}" target="_blank" style="text-decoration: none;">
+                    <button style="width: 100%; background: #FFFFFF; color: #000000; border: none; padding: 12px; border-radius: 8px; font-weight: 500; cursor: pointer; font-family: Inter, sans-serif; transition: background 0.2s;">
+                        Connect Google Account
+                    </button>
+                </a>
+                <div style="margin: 24px 0; display: flex; align-items: center; color: #333; font-size: 0.85rem;">
+                    <div style="flex-grow: 1; height: 1px; background: #222;"></div>
+                    <span style="padding: 0 12px; color: #666;">or paste code</span>
+                    <div style="flex-grow: 1; height: 1px; background: #222;"></div>
+                </div>
+        """, unsafe_allow_html=True)
+        
+        # Streamlit input rendered inside the faked HTML card visually
+        auth_code = st.text_input("Auth Code", label_visibility="collapsed", placeholder="Paste authorization code...")
+        
+        if auth_code:
+            try:
+                st.session_state.oauth_flow.fetch_token(code=auth_code)
+                st.session_state.creds = st.session_state.oauth_flow.credentials
+                
                 del st.session_state['oauth_flow']
                 del st.session_state['auth_url']
-            
-    return None
+                st.rerun()
+            except Exception as e:
+                st.error("Invalid or expired code. Please try again.")
+                if 'oauth_flow' in st.session_state:
+                    del st.session_state['oauth_flow']
+                    del st.session_state['auth_url']
+        
+        st.markdown("</div></div>", unsafe_allow_html=True)
 
-# --- Main App Controller ---
-creds = get_creds()
 
-if creds:
+# ==========================================
+# 2. MAIN SAAS WORKSPACE VIEW
+# ==========================================
+def render_workspace(creds):
     service = build(API_SERVICE_NAME, API_VERSION, credentials=creds)
 
-    # --- Sidebar Setup ---
-    with st.sidebar:
-        st.image("https://www.gstatic.com/images/branding/product/2x/campaign_manager_64dp.png", width=50)
-        st.title("CM360 Settings")
-        
-        # Profile Selector
-        try:
-            profiles_response = service.userProfiles().list().execute()
-            profiles = profiles_response.get('items', [])
-            
-            if not profiles:
-                st.error("No active CM360 profiles found for this account.")
-                st.stop()
-                
-            profile_dict = {f"{p['userName']} (ID: {p['accountId']})": p['profileId'] for p in profiles}
-            selected_profile_key = st.selectbox("Active Profile", options=list(profile_dict.keys()))
-            profile_id = profile_dict[selected_profile_key]
-            
-            st.caption(f"**Profile ID:** `{profile_id}`")
-            
-        except Exception as e:
-            st.error(f"Error fetching user profiles: {e}")
+    # Fetch profiles silently
+    try:
+        profiles_response = service.userProfiles().list().execute()
+        profiles = profiles_response.get('items', [])
+        if not profiles:
+            st.error("No active CM360 profiles found for this user.")
             st.stop()
-            
-        st.divider()
-        if st.button("🔴 Log Out", use_container_width=True):
+        profile_dict = {f"{p['userName']} ({p['accountId']})": p['profileId'] for p in profiles}
+    except Exception as e:
+        st.error(f"API Error: {e}")
+        st.stop()
+
+    # --- Top Navigation Bar ---
+    # We use columns to layout the top bar seamlessly
+    nav_col1, nav_col2, nav_col3 = st.columns([2, 1.5, 0.5])
+    with nav_col1:
+        st.markdown("<div class='nav-brand'>⚡ CM360 Workspace</div>", unsafe_allow_html=True)
+    with nav_col2:
+        # Integrated profile selector in the nav bar
+        selected_profile_key = st.selectbox("Profile", options=list(profile_dict.keys()), label_visibility="collapsed")
+        profile_id = profile_dict[selected_profile_key]
+    with nav_col3:
+        # Logout button
+        if st.button("Log out", type="secondary", use_container_width=True):
             del st.session_state['creds']
             st.rerun()
+            
+    st.markdown("<hr style='border: none; height: 1px; background-color: #1A1A1A; margin: 0 0 40px 0;'>", unsafe_allow_html=True)
 
-    # --- Header Banner ---
-    st.markdown("<div class='main-header'>Campaign Manager 360: Event Tag Manager</div>", unsafe_allow_html=True)
-    st.markdown("<div class='sub-header'>Bulk create impression & click event tags across Advertisers and Campaigns</div>", unsafe_allow_html=True)
+    # --- Main Workspace Content ---
+    _, main_col, _ = st.columns([1, 4, 1]) # Center the content
+    
+    with main_col:
+        st.markdown("<div class='workspace-header'>Generate Event Tags</div>", unsafe_allow_html=True)
+        st.markdown("<div class='workspace-sub'>Upload your structured CSV to create tags in bulk.</div>", unsafe_allow_html=True)
 
-    # --- Tabs Navigation ---
-    tab_create, tab_template, tab_docs = st.tabs(["🚀 Bulk Tag Creator", "📋 Download CSV Template", "📖 Field Documentation"])
+        # File Uploader
+        uploaded_file = st.file_uploader("Drop your CSV file here", type=["csv"], label_visibility="collapsed")
 
-    # ---------------------------------------------------------
-    # TAB 1: BULK CREATOR
-    # ---------------------------------------------------------
-    with tab_create:
-        uploaded_file = st.file_uploader("Upload CSV File", type=["csv"], help="Upload your structured event tags CSV.")
-
+        # Action Area
         if uploaded_file:
             df = pd.read_csv(uploaded_file)
-            
-            # Sanitize column names
             df.columns = df.columns.str.strip()
             
             required_cols = {'Tag Name', 'Level', 'Parent ID', 'Tag Type', 'Tag URL'}
             missing_cols = required_cols - set(df.columns)
 
             if missing_cols:
-                st.error(f"⚠️ Missing required columns in CSV: `{', '.join(missing_cols)}`")
+                st.error(f"❌ Invalid format. Missing columns: `{', '.join(missing_cols)}`")
             else:
-                st.subheader("Data Preview")
-                st.dataframe(df, use_container_width=True)
+                st.markdown("<br><p style='font-size: 0.9rem; color: #A1A1AA; margin-bottom: 8px; font-weight: 500;'>DATA PREVIEW</p>", unsafe_allow_html=True)
+                st.dataframe(df, use_container_width=True, height=200)
 
-                # Pre-flight Validation Warning
                 invalid_urls = df[~df['Tag URL'].astype(str).str.startswith('https://')]
                 if not invalid_urls.empty:
-                    st.warning(f"⚠️ Found {len(invalid_urls)} row(s) where 'Tag URL' does not start with `https://`. These will fail during creation.")
+                    st.warning(f"⚠️ Warning: {len(invalid_urls)} row(s) contain non-HTTPS URLs.")
 
-                st.divider()
-
-                if st.button("🚀 Execute Bulk Tag Creation", type="primary"):
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # Execution Trigger
+                if st.button("Generate Tags", type="primary"):
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     results = []
                     
-                    success_count = 0
-                    fail_count = 0
+                    success_count, fail_count = 0, 0
 
                     for index, row in df.iterrows():
                         tag_name = str(row['Tag Name']).strip()
                         level = str(row['Level']).strip().upper()
                         parent_id = str(row['Parent ID']).strip()
-                        tag_type = str(row['Tag Type']).strip()
-                        tag_url = str(row['Tag URL']).strip()
-
-                        tag_payload = {
+                        
+                        payload = {
                             "name": tag_name,
                             "status": "ENABLED", 
-                            "type": tag_type,
-                            "url": tag_url
+                            "type": str(row['Tag Type']).strip(),
+                            "url": str(row['Tag URL']).strip()
                         }
                         
-                        if level == 'ADVERTISER':
-                            tag_payload["advertiserId"] = parent_id
-                        elif level == 'CAMPAIGN':
-                            tag_payload["campaignId"] = parent_id
+                        if level == 'ADVERTISER': payload["advertiserId"] = parent_id
+                        elif level == 'CAMPAIGN': payload["campaignId"] = parent_id
                         else:
-                            results.append({
-                                "Row": index + 1,
-                                "Tag Name": tag_name, 
-                                "Status": "Failed", 
-                                "Error Details": "Invalid Level (Must be ADVERTISER or CAMPAIGN)", 
-                                "Tag ID": None
-                            })
+                            results.append({"Tag Name": tag_name, "Status": "FAILED", "Details": "Invalid Level", "ID": None})
                             fail_count += 1
                             continue
 
-                        # Make API Call
                         try:
-                            request = service.eventTags().insert(profileId=profile_id, body=tag_payload)
-                            response = request.execute()
-                            results.append({
-                                "Row": index + 1,
-                                "Tag Name": tag_name, 
-                                "Status": "Success", 
-                                "Error Details": "None", 
-                                "Tag ID": response.get('id')
-                            })
+                            req = service.eventTags().insert(profileId=profile_id, body=payload)
+                            res = req.execute()
+                            results.append({"Tag Name": tag_name, "Status": "SUCCESS", "Details": "-", "ID": res.get('id')})
                             success_count += 1
                         except Exception as e:
-                            results.append({
-                                "Row": index + 1,
-                                "Tag Name": tag_name, 
-                                "Status": "Failed", 
-                                "Error Details": str(e), 
-                                "Tag ID": None
-                            })
+                            results.append({"Tag Name": tag_name, "Status": "FAILED", "Details": str(e), "ID": None})
                             fail_count += 1
 
-                        # Update UI Progress
-                        progress = (index + 1) / len(df)
-                        progress_bar.progress(progress)
-                        status_text.text(f"Processing row {index + 1} of {len(df)}: {tag_name}")
+                        progress_bar.progress((index + 1) / len(df))
+                        status_text.caption(f"Processing: {tag_name}")
 
-                    # Execution Summary Dashboard
-                    st.subheader("Creation Summary")
-                    col_m1, col_m2, col_m3 = st.columns(3)
-                    col_m1.metric("Total Rows", len(df))
-                    col_m2.metric("Successfully Created", success_count)
-                    col_m3.metric("Failed", fail_count)
+                    # Results Dashboard
+                    st.markdown("<br><p style='font-size: 0.9rem; color: #A1A1AA; margin-bottom: 8px; font-weight: 500;'>EXECUTION SUMMARY</p>", unsafe_allow_html=True)
+                    m1, m2, m3 = st.columns(3)
+                    m1.metric("Total Executed", len(df))
+                    m2.metric("Successful", success_count)
+                    m3.metric("Failed", fail_count)
 
-                    results_df = pd.DataFrame(results)
-                    st.dataframe(results_df, use_container_width=True)
+                    res_df = pd.DataFrame(results)
+                    st.dataframe(res_df, use_container_width=True)
 
-                    # Export Log
-                    csv_export = results_df.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        "📥 Download Execution Log (CSV)", 
-                        data=csv_export, 
-                        file_name="cm360_event_tag_log.csv", 
-                        mime="text/csv"
-                    )
+                    csv_export = res_df.to_csv(index=False).encode('utf-8')
+                    st.download_button("Download Audit Log", data=csv_export, file_name="tag_log.csv", mime="text/csv", type="secondary")
 
-    # ---------------------------------------------------------
-    # TAB 2: SAMPLE CSV TEMPLATE
-    # ---------------------------------------------------------
-    with tab_template:
-        st.subheader("Generate Sample Template")
-        st.write("Use this pre-formatted CSV template to populate your event tag data.")
-
-        sample_data = pd.DataFrame([
-            {
-                "Tag Name": "IAS_Impression_JavaScript_Tag",
-                "Level": "ADVERTISER",
-                "Parent ID": "12345678",
-                "Tag Type": "IMPRESSION_JAVASCRIPT_EVENT_TAG",
-                "Tag URL": "https://pixel.adsafeprotected.com/jload?anId=9999"
-            },
-            {
-                "Tag Name": "DoubleVerify_Click_Tracker",
+        # Download Template Link (always available at the bottom)
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        with st.expander("Need a starter template?"):
+            sample_df = pd.DataFrame([{
+                "Tag Name": "Example_Pixel",
                 "Level": "CAMPAIGN",
-                "Parent ID": "87654321",
-                "Tag Type": "CLICK_THROUGH_EVENT_TAG",
-                "Tag URL": "https://tm.doubleverify.com/visit?id=123"
-            },
-            {
-                "Tag Name": "Moat_Impression_Image_Tag",
-                "Level": "CAMPAIGN",
-                "Parent ID": "87654321",
+                "Parent ID": "123456",
                 "Tag Type": "IMPRESSION_IMAGE_EVENT_TAG",
-                "Tag URL": "https://z.moatads.com/pixel.gif?m=1"
-            }
-        ])
+                "Tag URL": "https://pixel.example.com"
+            }])
+            buffer = io.BytesIO()
+            sample_df.to_csv(buffer, index=False)
+            st.download_button("Download CSV Template", data=buffer.getvalue(), file_name="template.csv", mime="text/csv", type="secondary")
 
-        st.dataframe(sample_data, use_container_width=True)
 
-        buffer = io.BytesIO()
-        sample_data.to_csv(buffer, index=False)
-        st.download_button(
-            label="📥 Download Sample CSV Template",
-            data=buffer.getvalue(),
-            file_name="cm360_event_tags_template.csv",
-            mime="text/csv"
-        )
+# ==========================================
+# APP ROUTING LOGIC
+# ==========================================
+def main():
+    # If not authenticated, show ONLY the login page
+    if 'creds' not in st.session_state or not st.session_state.creds or not st.session_state.creds.valid:
+        render_login_page()
+    # If authenticated, show ONLY the workspace
+    else:
+        render_workspace(st.session_state.creds)
 
-    # ---------------------------------------------------------
-    # TAB 3: DOCUMENTATION
-    # ---------------------------------------------------------
-    with tab_docs:
-        st.subheader("Field Specifications & Rules")
-        
-        st.markdown("""
-        | Field | Description | Allowed Values / Formatting |
-        | :--- | :--- | :--- |
-        | **Tag Name** | Descriptive name for the tag | Any text (e.g., `IAS_Viewability_Q3`) |
-        | **Level** | Scope of the event tag | `ADVERTISER` or `CAMPAIGN` |
-        | **Parent ID** | CM360 ID where tag will be attached | Numeric ID (Advertiser ID or Campaign ID) |
-        | **Tag Type** | Format/Type of event tag | `IMPRESSION_JAVASCRIPT_EVENT_TAG`<br>`IMPRESSION_IMAGE_EVENT_TAG`<br>`CLICK_THROUGH_EVENT_TAG` |
-        | **Tag URL** | Third-party pixel URL | Must start with **`https://`** |
-        """)
+if __name__ == "__main__":
+    main()
