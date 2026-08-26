@@ -6,10 +6,10 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-# --- Page Config (Must be first) ---
-st.set_page_config(page_title="CM360 Tag Manager", layout="wide", initial_sidebar_state="collapsed")
+# --- Page Setup ---
+st.set_page_config(page_title="CM360 Bulk Event Tag Creation", layout="wide", initial_sidebar_state="collapsed")
 
-# --- API Config ---
+# --- API Configuration ---
 SCOPES = ['https://www.googleapis.com/auth/dfatrafficking']
 API_SERVICE_NAME = 'dfareporting'
 API_VERSION = 'v5'
@@ -18,76 +18,78 @@ if "client_secrets" not in st.secrets:
     st.error("⚠️ Missing 'client_secrets' in Streamlit secrets configuration.")
     st.stop()
 
-# --- CSS Injection (Zero indentation to bypass markdown parsing) ---
+# --- Essential Minimalist Styling ---
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif !important; }
-#MainMenu, header, footer {display: none !important;}
-section[data-testid="stSidebar"] {display: none !important;}
+/* Global Clean Reset */
+#MainMenu, header, footer { display: none !important; }
+section[data-testid="stSidebar"] { display: none !important; }
 
-/* Clean App Background */
-.stApp { background-color: #FFFFFF !important; color: #0F172A !important; }
-
-/* Buttons */
-.stButton>button {
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    height: 48px;
-    transition: all 0.2s ease;
+.stApp {
+    background-color: #FAFAFA !important;
+    color: #0F172A !important;
 }
+
+/* Base Buttons */
+.stButton>button, .stDownloadButton>button {
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    height: 42px;
+}
+
 button[kind="primary"] {
-    background: #0F172A !important;
+    background-color: #2563EB !important;
     color: #FFFFFF !important;
     border: none !important;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1) !important;
 }
 button[kind="primary"]:hover {
-    background: #334155 !important;
-    transform: translateY(-1px);
-}
-button[kind="secondary"] {
-    background: #FFFFFF !important;
-    color: #0F172A !important;
-    border: 1px solid #E2E8F0 !important;
-}
-button[kind="secondary"]:hover {
-    background: #F8FAFC !important;
-    border-color: #CBD5E1 !important;
+    background-color: #1D4ED8 !important;
 }
 
-/* Inputs & File Uploader */
-.stTextInput input {
-    background-color: #F8FAFC !important;
-    border: 1px solid #E2E8F0 !important;
-    color: #0F172A !important;
-    border-radius: 8px !important;
-    padding: 12px 16px !important;
-    height: 48px !important;
-}
-.stTextInput input:focus {
+button[kind="secondary"], .stDownloadButton>button {
     background-color: #FFFFFF !important;
-    border-color: #0F172A !important;
-    box-shadow: 0 0 0 1px #0F172A !important;
+    color: #334155 !important;
+    border: 1px solid #CBD5E1 !important;
 }
-[data-testid="stFileUploadDropzone"] {
-    background-color: #F8FAFC !important;
-    border: 1px dashed #CBD5E1 !important;
-    border-radius: 12px !important;
-    padding: 32px !important;
+button[kind="secondary"]:hover, .stDownloadButton>button:hover {
+    background-color: #F1F5F9 !important;
 }
 
-/* Dataframes */
+/* File Uploader Container */
+[data-testid="stFileUploadDropzone"] {
+    background-color: #FFFFFF !important;
+    border: 1px dashed #CBD5E1 !important;
+    border-radius: 8px !important;
+    padding: 40px !important;
+}
+
+/* Table Card */
 [data-testid="stDataFrame"] {
+    background-color: #FFFFFF;
     border: 1px solid #E2E8F0;
     border-radius: 8px;
+}
+
+/* Step Badges */
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background-color: #2563EB;
+    color: #FFFFFF;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 600;
+    margin-right: 8px;
 }
 </style>
 """, unsafe_allow_html=True)
 
 
 # ==========================================
-# 1. AUTHENTICATION & LOGIN VIEW (SPLIT SCREEN)
+# 1. AUTHENTICATION (Split Screen with MiQ Colors)
 # ==========================================
 def render_login_page():
     if 'oauth_flow' not in st.session_state:
@@ -107,7 +109,6 @@ def render_login_page():
 
     auth_url = st.session_state.auth_url
 
-    # Create the two-column split layout
     col_left, col_right = st.columns([1, 1.2], gap="large")
     
     with col_left:
@@ -115,17 +116,14 @@ def render_login_page():
         st.write("") 
         st.write("") 
         st.write("") 
-        st.write("") 
-        st.write("") 
         
-        # 100% Flush left HTML for the clean login UI
         st.markdown(f"""
-<div>
-<h1 style="font-size: 2rem; font-weight: 700; color: #0F172A; margin: 0 0 8px 0; letter-spacing: -0.02em;">Welcome Back</h1>
-<p style="font-size: 1rem; color: #64748B; margin: 0 0 32px 0;">Sign in to CM360 Bulk Tag Manager.</p>
+<div style="padding-top: 40px;">
+<h1 style="font-size: 1.8rem; font-weight: 700; color: #0F172A; margin-bottom: 8px;">Welcome Back</h1>
+<p style="font-size: 0.95rem; color: #64748B; margin-bottom: 28px;">Sign in to CM360 Bulk Tag Manager.</p>
 
 <a href="{auth_url}" target="_blank" style="text-decoration: none;">
-<button style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 16px;">
+<button style="display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #FFFFFF; color: #0F172A; border: 1px solid #CBD5E1; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; margin-bottom: 16px;">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M22.56 12.25C22.56 11.47 22.49 10.73 22.36 10H12V14.26H17.92C17.67 15.63 16.89 16.79 15.74 17.56V20.3H19.31C21.4 18.38 22.56 15.57 22.56 12.25Z" fill="#4285F4"/>
 <path d="M12 23C14.97 23 17.46 22.02 19.31 20.3L15.74 17.56C14.74 18.23 13.48 18.63 12 18.63C9.13 18.63 6.7 16.69 5.82 14.1H2.15V16.94C3.96 20.53 7.7 23 12 23Z" fill="#34A853"/>
@@ -138,8 +136,7 @@ Sign in with Google
 </div>
 """, unsafe_allow_html=True)
         
-        # Input Field placed immediately below the button
-        auth_code = st.text_input("Authorization Code", label_visibility="collapsed", placeholder="Paste your authorization code here...")
+        auth_code = st.text_input("Authorization Code", label_visibility="collapsed", placeholder="Paste authorization code here...")
         
         if auth_code:
             try:
@@ -149,21 +146,17 @@ Sign in with Google
                 del st.session_state['auth_url']
                 st.rerun()
             except Exception as e:
-                st.error("Invalid or expired code. Please try again.")
-                if 'oauth_flow' in st.session_state:
-                    del st.session_state['oauth_flow']
-                    del st.session_state['auth_url']
+                st.error("Invalid authorization code. Please try again.")
 
     with col_right:
-        # Beautiful MiQ Brand Gradient covering the right side
         st.markdown("""
-<div style="height: 95vh; width: 100%; border-radius: 24px; margin-top: 12px; background: linear-gradient(135deg, #FFCA01 0%, #FF6500 25%, #FF2000 50%, #EA00AD 75%, #2B0030 100%); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+<div style="height: 90vh; width: 100%; border-radius: 16px; margin-top: 12px; background: linear-gradient(135deg, #FFCA01 0%, #FF6500 25%, #FF2000 50%, #EA00AD 75%, #2B0030 100%);">
 </div>
 """, unsafe_allow_html=True)
 
 
 # ==========================================
-# 2. MAIN SAAS WORKSPACE VIEW 
+# 2. MAIN WORKSPACE (Simple Vertical Layout)
 # ==========================================
 def render_workspace(creds):
     service = build(API_SERVICE_NAME, API_VERSION, credentials=creds)
@@ -179,54 +172,72 @@ def render_workspace(creds):
         st.error(f"API Error: {e}")
         st.stop()
 
-    # --- Workspace Header ---
-    st.markdown("<br>", unsafe_allow_html=True)
-    header_col1, header_col2 = st.columns([3, 1])
-    
-    with header_col1:
+    # Top Header Bar
+    h_left, h_right1, h_right2 = st.columns([5, 2, 1])
+    with h_left:
         st.markdown("""
-<div>
-<h1 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #0F172A;">Bulk Event Tags</h1>
-<p style="margin: 0; font-size: 0.95rem; color: #64748B;">Upload, preview, and generate pixels across campaigns.</p>
-</div>
-""", unsafe_allow_html=True)
-
-    with header_col2:
-        selected_profile_key = st.selectbox("Active Profile", options=list(profile_dict.keys()), label_visibility="collapsed")
+        <div style="padding-top: 8px;">
+            <strong style="font-size: 1.1rem; color: #0F172A;">CM360</strong>
+            <span style="color: #94A3B8; margin: 0 6px;">·</span>
+            <span style="color: #64748B;">Bulk Event Tag Creation</span>
+        </div>
+        """, unsafe_allow_html=True)
+    with h_right1:
+        selected_profile_key = st.selectbox("Profile", options=list(profile_dict.keys()), label_visibility="collapsed")
         profile_id = profile_dict[selected_profile_key]
-        if st.button("Sign Out", type="secondary", use_container_width=True):
+    with h_right2:
+        if st.button("Sign out", type="secondary", use_container_width=True):
             del st.session_state['creds']
             st.rerun()
 
-    st.markdown("<hr style='border: none; height: 1px; background-color: #E2E8F0; margin: 32px 0;'>", unsafe_allow_html=True)
+    st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 12px 0 32px 0;'>", unsafe_allow_html=True)
 
-    # --- Left/Right Workspace Layout ---
-    work_left, work_right = st.columns([1, 1.5], gap="large")
+    # Main Center Column
+    _, main_col, _ = st.columns([1, 4, 1])
 
-    with work_left:
-        st.markdown("<h3 style='font-size: 1.1rem; color: #0F172A; margin-bottom: 16px;'>1. Upload Data</h3>", unsafe_allow_html=True)
-        
-        uploaded_file = st.file_uploader("Drop your CSV file here", type=["csv"], label_visibility="collapsed")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        with st.expander("Need the CSV Template?"):
-            st.write("Your CSV must contain exactly these 5 columns.")
-            sample_df = pd.DataFrame([{
-                "Tag Name": "Example_Pixel",
-                "Level": "CAMPAIGN",
-                "Parent ID": "123456",
-                "Tag Type": "IMPRESSION_IMAGE_EVENT_TAG",
-                "Tag URL": "https://pixel.example.com"
-            }])
-            st.dataframe(sample_df, hide_index=True)
-            buffer = io.BytesIO()
-            sample_df.to_csv(buffer, index=False)
-            st.download_button("Download Template", data=buffer.getvalue(), file_name="template.csv", mime="text/csv", type="secondary")
+    with main_col:
+        st.markdown("""
+        <h2 style="font-size: 1.6rem; font-weight: 700; color: #0F172A; margin-bottom: 6px;">Bulk Event Tag Creation</h2>
+        <p style="color: #64748B; margin-bottom: 28px;">Upload a CSV file to create event tags in bulk. Use the sample template to get started.</p>
+        """, unsafe_allow_html=True)
 
-    with work_right:
-        st.markdown("<h3 style='font-size: 1.1rem; color: #0F172A; margin-bottom: 16px;'>2. Preview & Execute</h3>", unsafe_allow_html=True)
+        # STEP 1: UPLOAD DATA
+        st.markdown("""
+        <div style="font-size: 1.1rem; font-weight: 600; color: #0F172A; margin-bottom: 12px;">
+            <span class="step-number">1</span> Upload Data
+        </div>
+        """, unsafe_allow_html=True)
+
+        uploaded_file = st.file_uploader("Upload CSV File", type=["csv"], label_visibility="collapsed")
+
+        # Download Sample Template Button
+        sample_df = pd.DataFrame([{
+            "Tag Name": "Example_Impression_Tag",
+            "Level": "CAMPAIGN",
+            "Parent ID": "12345678",
+            "Tag Type": "IMPRESSION_IMAGE_EVENT_TAG",
+            "Tag URL": "https://pixel.example.com"
+        }])
+        buffer = io.BytesIO()
+        sample_df.to_csv(buffer, index=False)
         
-        if uploaded_file:
+        st.markdown("<div style='margin-top: 12px;'></div>", unsafe_allow_html=True)
+        st.download_button(
+            "📥 Download Sample Template", 
+            data=buffer.getvalue(), 
+            file_name="cm360_event_tags_template.csv", 
+            mime="text/csv"
+        )
+
+        # STEP 2: PREVIEW & EXECUTE (Conditional on upload)
+        if uploaded_file is not None:
+            st.markdown("<hr style='border: none; border-top: 1px solid #E2E8F0; margin: 40px 0 28px 0;'>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style="font-size: 1.1rem; font-weight: 600; color: #0F172A; margin-bottom: 16px;">
+                <span class="step-number">2</span> Preview Data
+            </div>
+            """, unsafe_allow_html=True)
+
             df = pd.read_csv(uploaded_file)
             df.columns = df.columns.str.strip()
             
@@ -234,18 +245,18 @@ def render_workspace(creds):
             missing_cols = required_cols - set(df.columns)
 
             if missing_cols:
-                st.error(f"❌ Invalid format. Missing columns: `{', '.join(missing_cols)}`")
+                st.error(f"❌ Missing required CSV columns: `{', '.join(missing_cols)}`")
             else:
-                st.dataframe(df, use_container_width=True, height=250)
+                st.dataframe(df, use_container_width=True, height=280)
 
                 invalid_urls = df[~df['Tag URL'].astype(str).str.startswith('https://')]
                 if not invalid_urls.empty:
-                    st.warning(f"⚠️ {len(invalid_urls)} row(s) contain non-HTTPS URLs and will fail.")
+                    st.warning(f"⚠️ {len(invalid_urls)} row(s) contain URLs that do not start with `https://` and will fail.")
 
-                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
                 
-                # Execution Trigger
-                if st.button("🚀 Push Tags to CM360", type="primary"):
+                # Execute Action
+                if st.button("Create Tags", type="primary"):
                     progress_bar = st.progress(0)
                     status_text = st.empty()
                     results = []
@@ -273,29 +284,32 @@ def render_workspace(creds):
                         try:
                             req = service.eventTags().insert(profileId=profile_id, body=payload)
                             res = req.execute()
-                            results.append({"Tag Name": tag_name, "Status": "SUCCESS", "Details": "-", "ID": res.get('id')})
+                            results.append({"Tag Name": tag_name, "Status": "SUCCESS", "Details": "Created", "ID": res.get('id')})
                             success_count += 1
                         except Exception as e:
                             results.append({"Tag Name": tag_name, "Status": "FAILED", "Details": str(e), "ID": None})
                             fail_count += 1
 
                         progress_bar.progress((index + 1) / len(df))
-                        status_text.caption(f"Processing: {tag_name}")
+                        status_text.caption(f"Processing row {index + 1} of {len(df)}: {tag_name}")
 
-                    # Results Dashboard
-                    st.success(f"Execution complete! {success_count} tags created, {fail_count} failed.")
+                    st.success(f"Execution complete! {success_count} created, {fail_count} failed.")
 
                     res_df = pd.DataFrame(results)
                     st.dataframe(res_df, use_container_width=True)
 
                     csv_export = res_df.to_csv(index=False).encode('utf-8')
-                    st.download_button("Download Execution Log", data=csv_export, file_name="tag_log.csv", mime="text/csv", type="secondary")
-        else:
-            st.info("Upload a CSV file on the left to preview your data and execute the creation process.")
+                    st.download_button(
+                        "📥 Download Audit Log", 
+                        data=csv_export, 
+                        file_name="cm360_creation_log.csv", 
+                        mime="text/csv", 
+                        type="secondary"
+                    )
 
 
 # ==========================================
-# APP ROUTING LOGIC
+# MAIN ROUTING
 # ==========================================
 def main():
     if 'creds' not in st.session_state or not st.session_state.creds or not st.session_state.creds.valid:
